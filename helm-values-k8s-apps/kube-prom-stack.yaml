@@ -632,7 +632,7 @@ alertmanager:
     ## Secret must be manually created in the namespace
     ##
     tls: 
-      - secretName: wildcard-tls
+      - secretName: easyshop-tls
         hosts:
         - "*.emmanuelogar.website"
 
@@ -1291,7 +1291,7 @@ grafana:
     ## Secret must be manually created in the namespace
     ##
     tls: 
-      - secretName: wildcard-tls
+      - secretName: easyshop-tls
         hosts:
         - "*.emmanuelogar.website"
 
@@ -3685,7 +3685,7 @@ prometheus:
     ## Secret must be manually created in the namespace
     ##
     tls:
-        - secretName: wildcard-tls
+        - secretName: easyshop-tls
           hosts:
             - "*.emmanuelogar.website"
 

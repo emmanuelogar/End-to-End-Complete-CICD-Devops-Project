@@ -147,7 +147,7 @@ ingress:
       paths:
         - path: /
   tls:
-    - secretName: wildcard-tls
+    - secretName: easyshop-tls
       hosts:
         - "*.emmanuelogar.website"
 

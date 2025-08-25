@@ -92,10 +92,13 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-
-          sed -i "s|image: .*/${{ env.IMAGE_NAME }}:.*|image: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}|" kubernetes/deployment.yaml
-          sed -i "s|image: .*/${{ env.MIGRATION_IMAGE_NAME }}:.*|image: ghcr.io/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}|" kubernetes/migration.yaml
-
+      
+          yq -i ".image.repository = \"ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}\"" kubernetes/helm/easyshop/values.yaml
+          yq -i ".image.tag = \"${{ steps.vars.outputs.tag }}\"" kubernetes/helm/easyshop/values.yaml
+      
+          yq -i ".migrationJob.image = \"ghcr.io/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}\"" kubernetes/helm/easyshop/values.yaml
+      
           git add kubernetes/
           git commit -m "Update manifests with image tag ${{ steps.vars.outputs.tag }}"
           git push
+        

@@ -1,0 +1,18 @@
+{{- if .Values.migrationJob.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.migrationJob.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  template:
+    spec:
+      containers:
+        - name: migration
+          image: {{ .Values.migrationJob.image }}
+          imagePullPolicy: Always
+          env:
+            - name: MONGODB_URI
+              value: {{ .Values.migrationJob.mongodbUri }}
+      restartPolicy: OnFailure
+{{- end }}

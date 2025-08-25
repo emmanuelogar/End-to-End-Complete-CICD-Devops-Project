@@ -53,7 +53,21 @@ EasyShop follows a three-tier architecture pattern:
 
 ## Setup & Initialization <br/>
 
-### 1. Install Terraform
+### 1. Install [Kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
+#### Linux
+```bash
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+kubectl version --client
+```
+### 2. Install [Helm](https://helm.sh/docs/intro/install/)
+#### Linux
+```bash
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+```
+### 3. Install Terraform
 * Install Terraform<br/>
 #### Linux & macOS
 ```bash
@@ -69,30 +83,18 @@ terraform -v
 ```bash
 terraform init
 ```
-### 2. Install AWS CLI
-AWS CLI (Command Line Interface) allows you to interact with AWS services directly from the command line.
+### 2. Setup Azure CLI
+Start by logging into Azure by run the following command and follow the prompts:
 
-```bash
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-sudo apt install unzip
-unzip awscliv2.zip
-sudo ./aws/install
-```
-###  Install AWS CLI in Windows 'powershell'
-```msiexec.exe /i https://awscli.amazonaws.com/AWSCLIV2.msi```
+```az login --use-device-code```
 
+###  Authentication with Azure CLI
+Terraform needs to authenticate with Azure to create and manage resources. Since you are already logged in to the Azure CLI, you can run the following command to set up Terraform authentication:
 
- ```aws configure```
-
-
-> #### This will prompt you to enter:<br/>
-- **AWS Access Key ID:**<br/>
-- **AWS Secret Access Key:**<br/>
-- **Default region name:**<br/>
-- **Default output format:**<br/>
+```export ARM_SUBSCRIPTION_ID=$(az account show --query id -o tsv)```
 
 > [!NOTE] 
-> Make sure the IAM user you're using has the necessary permissions. You’ll need an AWS IAM Role with programmatic access enabled, along with the Access Key and Secret Key.
+> This environment variable will be used by Terraform to determine which Azure subscription to use when creating resources.
 
 ## Getting Started
 
@@ -101,202 +103,89 @@ sudo ./aws/install
 1. **Clone the Repository:**
 First, clone this repo to your local machine:<br/>
 ```bash
-git clone https://github.com/LondheShubham153/tws-e-commerce-app.git
-cd terraform
+git clone https://github.com/emmanuelogar/End-to-End-Complete-CICD-Devops-Project.git
+cd terraform/aks
 ```
-2. **Generate SSH Key Pair:**
-Create a new SSH key to access your EC2 instance:
-```bash
-ssh-keygen -f terra-key
-```
-This will prompt you to create a new key file named terra-key.
-
-3. **Private key permission:** Change your private key permission:
-```bash
-chmod 400 terra-key
-```
-
-4. **Initialize Terraform:**
+2. **Initialize Terraform:**
 Initialize the Terraform working directory to download required providers:
 ```bash
 terraform init
 ```
-5. **Review the Execution Plan:**
+3. **Review the Execution Plan:**
 Before applying changes, always check the execution plan:
 ```bash
 terraform plan
 ```
-6. **Apply the Configuration:**
+4. **Apply the Configuration:**
 Now, apply the changes and create the infrastructure:
 ```bash
 terraform apply
 ```
 > Confirm with `yes` when prompted.
 
-7. **Access Your EC2 Instance;** <br/>
-After deployment, grab the public IP of your EC2 instance from the output or AWS Console, then connect using SSH:
-```bash
-ssh -i terra-key ubuntu@<public-ip>
-```
 8. **Update your kubeconfig:**
-wherever you want to access your eks wheather it is yur local machine or bastion server this command will help you to interact with your eks.
-> [!CAUTION]
-> you need to configure aws cli first to execute this command:
-
+Now, let's connect to the AKS cluster using the Azure CLI. You can do this by running the following command to pass Terraform outputs to the Azure CLI command:
 ```bash
-aws configure
-```
-
-```bash
-aws eks --region eu-west-1 update-kubeconfig --name tws-eks-cluster
+az aks get-credentials \
+--resource-group $(terraform output -raw rg_name) \
+--name $(terraform output -raw aks_name)
 ```
 9. **Check your cluster:**
 ```bash
 kubectl get nodes
 ```
 
-## Jenkins Setup Steps
-> [!TIP]
-> Check if jenkins service is running:
-
+### Nginx ingress controller:<br/>
+> 1. Install the Nginx Ingress Controller using Helm:
 ```bash
-sudo systemctl status jenkins
+kubectl create namespace ingress-nginx
 ```
-## Steps to Access Jenkins & Install Plugins
-
-#### 1. **Open Jenkins in Browser:**
-> Use your public IP with port 8080:
->**http://<public_IP>:8080**
-
-#### 2. **Initial Admin password:**
-> Start the service and get the Jenkins initial admin password:
-> ```bash
-> sudo cat /var/lib/jenkins/secrets/initialAdminPassword
-> ```
-
-#### 3. **Start Jenkins (*If Not Running*):**
-> Get the Jenkins initial admin password:
-> ```bash
-> sudo systemctl enable jenkins
-> sudo systemctl restart jenkins
-> ```
-#### 4. **Install Essential Plugins:**
-> - Navigate to:
-> **Manage Jenkins → Plugins → Available Plugins**<br/>
-> - Search and install the following:<br/>
->   - **Docker Pipeline**<br/>
->   - **Pipeline View**
-
-
-#### 5. **Set Up Docker & GitHub Credentials in Jenkins (Global Credentials)**<br/>
->
-> - GitHub Credentials:
->   - Go to:
-**Jenkins → Manage Jenkins → Credentials → (Global) → Add Credentials**
-> - Use:
->   - Kind: **Username with password**
->   - ID: **github-credentials**<br/>
-
-
-> - DockerHub Credentials:
-> Go to the same Global Credentials section
-> - Use:
->   - Kind: **Username with password**
->   - ID: **docker-hub-credentials**
-> [Notes:]
-> Use these IDs in your Jenkins pipeline for secure access to GitHub and DockerHub
-
-#### 6. Jenkins Shared Library Setup:
-> - `Configure Trusted Pipeline Library`:
->   - Go to:
-> **Jenkins → Manage Jenkins → Configure System**
-> Scroll to Global Pipeline Libraries section
->
-> - **Add a New Shared Library:** 
-> - **Name:** Shared
-> - **Default Version:** main
-> - **Project Repository URL:** `https://github.com/<your user-name/jenkins-shared-libraries`.
->
-> [Notes:] 
-> Make sure the repo contains a proper directory structure eq: vars/<br/>
-	
-#### 7. Setup Pipeline<br/>
-> - Create New Pipeline Job<br/>
->   - **Name:** EasyShop<br/>
->   - **Type:** Pipeline<br/>
-> Press `Okey`<br/>
-
-> > In **General**<br/>
-> > - **Description:** EasyShop<br/>
-> > - **Check the box:** `GitHub project`<br/>
-> > - **GitHub Repo URL:** `https://github.com/<your user-name/tws-e-commerce-app`<br/>
->
-> > In **Trigger**<br/>
-> > - **Check the box:**`GitHub hook trigger for GITScm polling`<br/>
->
-> > In **Pipeline**<br/>
-> > - **Definition:** `Pipeline script from SCM`<br/>
-> > - **SCM:** `Git`<br/>
-> > - **Repository URL:** `https://github.com/<your user-name/tws-e-commerce-app`<br/>
-> > - **Credentials:** `github-credentials`<br/>
-> > - **Branch:** master<br/>
-> > - **Script Path:** `Jenkinsfile`<br/>
-
-#### **Fork Required Repos**<br/>
-> > Fork App Repo:<br/>
-> > * Open the `Jenkinsfile`<br/>
-> > * Change the DockerHub username to yours<br/>
->
-> > **Fork Shared Library Repo:**<br/>
-> > * Edit `vars/update_k8s_manifest.groovy`<br/>
-> > * Update with your `DockerHub username`<br/>
-> 
-> > **Setup Webhook**<br/>
-> > In GitHub:<br/>
-> >  * Go to **`Settings` → `Webhooks`**<br/>
-> >  * Add a new webhook pointing to your Jenkins URL<br/>
-> >  * Select: **`GitHub hook trigger for GITScm polling`** in Jenkins job<br/>
->
-> > **Trigger the Pipeline**<br/>
-> > Click **`Build Now`** in Jenkins
-
-#### **8. CD – Continuous Deployment Setup**<br/>
-**Prerequisites:**<br/>
-Before configuring CD, make sure the following tools are installed:<br/>
-* Installations Required:<br/>
-**kubectl**<br/>
-**AWS CLI**
-
-**SSH into Bastion Server**<br/>
-* Connect to your Bastion EC2 instance via SSH.
-
-**Note:**<br/>
-This is not the node where Jenkins is running. This is the intermediate EC2 (Bastion Host) used for accessing private resources like your EKS cluster.
-
-**8. Configure AWS CLI on Bastion Server**
-Run the AWS configure command:<br/>
+> 2. Add the Nginx Ingress Controller Helm repository:
 ```bash
-aws configure
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
 ```
-Add your Access Key and Secret Key when prompted.
-
-**9. Update Kubeconfig for EKS**<br/>
-Run the following important command:
+> 3. Install the Nginx Ingress Controller:
 ```bash
-aws eks update-kubeconfig --region eu-west-1 --name tws-eks-cluster
+helm install nginx-ingress ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --set controller.service.type=LoadBalancer
 ```
-* This command maps your EKS cluster with your Bastion server.
-* It helps to communicate with EKS components.
+> 4. Check the status of the Nginx Ingress Controller:
+```bash
+kubectl get pods -n ingress-nginx
+```
+> 5. Get the external IP address of the LoadBalancer service:
+```bash
+kubectl get svc -n ingress-nginx
+```
 
-**10. Install AWS application load balancer refering the below docs link**<br/>
+### Install Cert-Manager
+
+> 1. **Jetpack:** Add the Jetstack Helm repository:
+```bash
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
 ```
-https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
-```
-**11. Install the EBS CSI driver refering the below docs link**<br/>
-```
-https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html#eksctl_store_app_data
+> 2. **Cert-Manager:** Install the Cert-Manager Helm chart:
+```bash
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.12.0 \
+  --set installCRDs=true
+``` 
+> 3. **Check pods:**Check the status of the Cert-Manager pods:
+```bash
+kubectl get pods -n cert-manager
 ```
 
+> 4. **DNS Setup:** Find your DNS name from the LoadBalancer service:
+```bash
+kubectl get svc nginx-ingress-ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+```
+> 5. Create a DNS record for your domain pointing to the LoadBalancer IP.
+> - Go to your godaddy dashboard or your prefered Domain name registrar and create a new A record and map the IP you just got in the terminal.
 
 **12. Argo CD Setup**<br/>
 Create a Namespace for Argo CD<br/>
@@ -316,7 +205,7 @@ helm show values argo/argo-cd > argocd-values.yaml
 3. edit the values file, change the below settings.
 ```
 global:
-  domain: argocd.example.com
+  domain: argocd.domain
 
 configs:
   params:
@@ -325,26 +214,21 @@ configs:
 server:
   ingress:
     enabled: true
-    controller: aws
-    ingressClassName: alb
+    ingressClassName: nginx
     annotations:
-      alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/certificate-arn: <your-cert-arn>
-      alb.ingress.kubernetes.io/group.name: easyshop-app-lb
-      alb.ingress.kubernetes.io/target-type: ip
-      alb.ingress.kubernetes.io/backend-protocol: HTTP
-      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}, {"HTTPS":443}]'
-      alb.ingress.kubernetes.io/ssl-redirect: '443'
-    hostname: argocd.devopsdock.site
-    aws:
-      serviceType: ClusterIP # <- Used with target-type: ip
-      backendProtocolVersion: GRPC
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    extraTls:
+      - hosts:
+        - argocd.domain
+        # Based on the ingress controller used secret might be optional
+        secretName: easyshop-tls
 ```
 4. save and upgrade the helm chart.
 ```
-helm upgrade my-argo-cd argo/argo-cd -n argocd -f my-values.yaml
+helm upgrade my-argo-cd argo/argo-cd -n argocd -f helm-values-k8s-app/argocd-values.yaml
 ```
-5. add the record in route53 “argocd.devopsdock.site” with load balancer dns.
+5. add the record in your domain registrar “argocd.domain” with load balancer ip.
 
 6. access it in browser.
 
@@ -371,8 +255,8 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 
 > In the Source section:
 > 
-> - **Repo URL:** Add the Git repository URL that contains your Kubernetes manifests.
-> - **Path:** `Kubernetes` (or the actual path inside the repo where your manifests reside)
+> - **Repo URL:** Add the Git repository URL that contains your Kubernetes helm.
+> - **Path:** `Kubernetes/helm` (or the actual path inside the repo where your manifests reside)
 
 > In the “Destination” section:
 > 
