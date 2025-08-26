@@ -83,7 +83,7 @@ mongodb:
   persistence:
     enabled: true
     size: 5Gi
-    storageClass: ""   # optional
+    storageClass: managed-csi
     pvcName: mongodb-pvc
 
 migrationJob:

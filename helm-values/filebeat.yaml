@@ -1,0 +1,6 @@
+filebeatConfig:
+    filebeat.yml: |
+      filebeat.inputs:
+      - type: container
+        paths:
+          - /var/log/containers/*easyshop*.log
