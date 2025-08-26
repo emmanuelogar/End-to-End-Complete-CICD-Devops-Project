@@ -55,11 +55,8 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
       - name: Run Unit Tests
-        run: |
-          echo "Running tests..."
-          # replace with your test command
-          make test || ./scripts/run_tests.sh
-
+        run: ./test.sh
+        
       - name: Security Scan with Trivy (Main App)
         uses: aquasecurity/trivy-action@0.20.0
         with:

@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "migrate": "ts-node scripts/migrate-data.ts"
+    "migrate": "ts-node scripts/migrate-data.ts",
+    "test": "vitest run --coverage",
+    "test:ui": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -30,7 +33,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.334.0",
     "mongoose": "^8.1.1",
-    "next": "14.1.0",
+    "next": "^14.2.32",
     "next-auth": "^4.24.5",
     "next-themes": "^0.2.1",
     "react": "^18",
@@ -47,17 +50,24 @@
   "devDependencies": {
     "@babel/core": "^7.24.0",
     "@babel/plugin-syntax-import-assertions": "^7.26.0",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-redux": "^7.1.33",
+    "@vitejs/plugin-react": "^5.0.1",
+    "@vitest/coverage-v8": "^3.2.4",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.1.0",
+    "jsdom": "^26.1.0",
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }
