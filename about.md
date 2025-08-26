@@ -253,8 +253,20 @@ For any other issues, please create a GitHub issue with the error details.
 
 ## 🧪 Testing
 
-> [!NOTE]
-> Coming soon: Unit tests and E2E tests with Jest and Cypress
+This project uses **[Vitest](https://vitest.dev/)** and **[React Testing Library](https://testing-library.com/)** for unit testing.
+
+### 📌 Running Tests Locally
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:ui
+
+# Generate coverage report
+npm run coverage
+```
 
 ## 🔧 Troubleshooting
 
@@ -316,6 +328,9 @@ We welcome contributions! Please follow these steps:
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -329,8 +344,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions or feedback, please open an issue or contact the maintainers:
 
-- Maintainer - [@Md. Afzal hassan Ehsani](https://github.com/iemafzalhassan)
-- Project Link: [https://github.com/iemafzalhassan/easyshop](https://github.com/iemafzalhassan/easyshop)
+- First Developer - [@Md. Afzal hassan Ehsani](https://github.com/iemafzalhassan)
+- Contributor - [@Emmanuel Ogar](https://github.com/emmanuelogar)
+- Project Link: [https://github.com/emmanuelogar/easyshop](https://github.com/emmanuelogar/easyshop)
 
 ---
 
