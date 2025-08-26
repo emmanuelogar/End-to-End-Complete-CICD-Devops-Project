@@ -1,9 +1,9 @@
 name: Run Tests
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
+  push:
     branches: [ "main" ]
 
 jobs:
@@ -18,14 +18,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci   # faster & ensures clean lockfile install
 
       - name: Run tests
-        run: npm test
+        run: npm test -- --run
 
       - name: Upload coverage report
+        if: always() # ensure report uploads even if tests fail
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report

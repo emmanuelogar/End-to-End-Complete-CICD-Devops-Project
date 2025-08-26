@@ -12,8 +12,36 @@ env:
   MIGRATION_IMAGE_NAME: easyshop-migration
 
 jobs:
+  # -------------------------
+  # 1. Run Tests (Full CI Tests)
+  # -------------------------
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Unit & Integration Tests with Coverage
+        run: npm run test -- --coverage
+
+      - name: Run E2E Tests (optional)
+        run: npm run test:e2e --if-present
+
+  # -------------------------
+  # 2. Build & Push Images (depends on tests passing)
+  # -------------------------
   build:
     runs-on: ubuntu-latest
+    needs: test   # 👈 ensures tests must pass before build runs
 
     permissions:
       contents: write
@@ -35,8 +63,7 @@ jobs:
 
       - name: Extract Git metadata
         id: vars
-        run: |
-          echo "tag=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+        run: echo "tag=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Build Main App Image
         uses: docker/build-push-action@v6
@@ -54,9 +81,6 @@ jobs:
           push: false
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
-      - name: Run Unit Tests
-        run: ./test.sh
-        
       - name: Security Scan with Trivy (Main App)
         uses: aquasecurity/trivy-action@0.20.0
         with:
@@ -98,4 +122,3 @@ jobs:
           git add kubernetes/
           git commit -m "Update manifests with image tag ${{ steps.vars.outputs.tag }}"
           git push
-        
