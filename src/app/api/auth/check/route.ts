@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth/utils";
 import User from "@/lib/models/user";
