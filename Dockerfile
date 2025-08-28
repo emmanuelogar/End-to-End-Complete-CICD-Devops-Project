@@ -16,6 +16,9 @@ RUN npm ci
 # Copy all project files
 COPY . .
 
+# Set an environment variable to signal the build stage
+ENV BUILD_WITH_MOCK_DB=true
+
 # Build the Next.js application
 RUN npm run build
 
