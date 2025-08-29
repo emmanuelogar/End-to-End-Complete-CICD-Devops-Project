@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
-import Cart from '@/lib/models/cart';
+import Cart, { ICart, ICartItem } from '@/lib/models/cart';
 import Product from '@/lib/models/product';
 import { requireAuth } from '@/lib/auth/utils';
 
@@ -13,38 +13,20 @@ export async function GET(request: NextRequest) {
     const auth = await requireAuth(request);
     await dbConnect();
     
-    const cart = await Cart.findOne({ user: auth.userId });
+    // Use populate to efficiently get product details
+    const cart = await Cart.findOne({ user: auth.userId }).populate({
+      path: 'items.product',
+      model: Product,
+      select: '_id originalId title price image'
+    });
     
     if (!cart) {
       console.log('No cart found for user:', auth.userId);
       return NextResponse.json({ items: [], total: 0 });
     }
 
-    // Populate product details
-    const populatedItems = await Promise.all(
-      cart.items.map(async (item: any) => {
-        const product = await Product.findOne({ originalId: item.product });
-        const itemObj = typeof item.toObject === 'function' ? item.toObject() : item;
-        return {
-          ...itemObj,
-          product: product ? {
-            _id: product._id,
-            originalId: product.originalId,
-            title: product.title,
-            price: product.price,
-            image: product.image
-          } : null
-        };
-      })
-    );
-
-    const populatedCart = {
-      ...cart.toObject(),
-      items: populatedItems
-    };
-    
-    console.log('Cart found:', populatedCart);
-    return NextResponse.json(populatedCart);
+    console.log('Cart found:', cart.toObject());
+    return NextResponse.json(cart.toObject());
   } catch (error: any) {
     console.error('Cart error:', error);
     return NextResponse.json(
@@ -78,7 +60,7 @@ export async function POST(request: NextRequest) {
     console.log('Found product:', product);
 
     // Find or create cart
-    let cart = await Cart.findOne({ user: auth.userId });
+    let cart: ICart | null = await Cart.findOne({ user: auth.userId });
     if (!cart) {
       console.log('Creating new cart for user:', auth.userId);
       cart = new Cart({
@@ -89,8 +71,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create cart item
-    const cartItem = {
-      product: product.originalId,
+    const cartItem: ICartItem = {
+      product: product._id, // Use ObjectId here
       quantity,
       price
     };
@@ -99,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     // Find item in cart
     const existingItemIndex = cart.items.findIndex(
-      item => item.product === product.originalId
+      (item) => item.product.toString() === product._id.toString()
     );
 
     if (existingItemIndex > -1) {
@@ -124,31 +106,15 @@ export async function POST(request: NextRequest) {
     console.log('Cart saved successfully');
 
     // Populate product details for response
-    const populatedItems = await Promise.all(
-      cart.items.map(async (item: any) => {
-        const product = await Product.findOne({ originalId: item.product });
-        const itemObj = typeof item.toObject === 'function' ? item.toObject() : item;
-        return {
-          ...itemObj,
-          product: product ? {
-            _id: product._id,
-            originalId: product.originalId,
-            title: product.title,
-            price: product.price,
-            image: product.image
-          } : null
-        };
-      })
-    );
+    const populatedCart = await cart.populate({
+      path: 'items.product',
+      model: Product,
+      select: '_id originalId title price image'
+    });
+    
+    console.log('Populated cart:', populatedCart.toObject());
 
-    const populatedCart = {
-      ...cart.toObject(),
-      items: populatedItems
-    };
-
-    console.log('Populated cart:', populatedCart);
-
-    return NextResponse.json(populatedCart);
+    return NextResponse.json(populatedCart.toObject());
   } catch (error: any) {
     console.error('Cart error:', error);
     return NextResponse.json(

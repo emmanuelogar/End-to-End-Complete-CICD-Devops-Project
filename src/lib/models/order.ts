@@ -1,6 +1,5 @@
 import mongoose, { Model } from 'mongoose';
 import { ICartItem } from './cart'; // Note: ICartItem is not used in the provided code
-import { IOrder } from './order'; // Added to ensure correct type usage
 
 export interface IOrderItem {
   product: string;

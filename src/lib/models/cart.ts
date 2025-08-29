@@ -1,13 +1,16 @@
-import mongoose, { Document, Model } from 'mongoose';
+import mongoose, { Document, Model, Types } from 'mongoose';
 
 export interface ICartItem {
-  product: string;
+  product: Types.ObjectId;
   quantity: number;
+  price: number;
 }
 
 export interface ICart extends Document {
+  _id: Types.ObjectId;
   user: mongoose.Types.ObjectId;
   items: ICartItem[];
+  total: number;
 }
 
 const cartItemSchema = new mongoose.Schema<ICartItem>({
@@ -21,6 +24,10 @@ const cartItemSchema = new mongoose.Schema<ICartItem>({
     required: true,
     min: 1,
   },
+  price: {
+    type: Number,
+    required: true,
+  }
 });
 
 const cartSchema = new mongoose.Schema<ICart>({
@@ -30,6 +37,10 @@ const cartSchema = new mongoose.Schema<ICart>({
     required: true,
   },
   items: [cartItemSchema],
+  total: {
+    type: Number,
+    default: 0
+  }
 });
 
 // Check for the build environment flag
