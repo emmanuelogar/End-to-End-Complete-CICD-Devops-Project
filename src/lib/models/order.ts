@@ -1,5 +1,6 @@
-import mongoose from 'mongoose';
-import { ICartItem } from './cart';
+import mongoose, { Model } from 'mongoose';
+import { ICartItem } from './cart'; // Note: ICartItem is not used in the provided code
+import { IOrder } from './order'; // Added to ensure correct type usage
 
 export interface IOrderItem {
   product: string;
@@ -78,10 +79,23 @@ const orderSchema = new mongoose.Schema<IOrder>({
   timestamps: true
 });
 
-// Delete existing model if it exists
-if (mongoose.models.Order) {
-  delete mongoose.models.Order;
+const IS_BUILD_MODE = process.env.BUILD_WITH_MOCK_DB === 'true';
+
+let Order: Model<IOrder>;
+
+if (IS_BUILD_MODE) {
+  const mockModel = {
+    find: () => Promise.resolve([]),
+    findOne: () => Promise.resolve(null),
+    findById: () => Promise.resolve(null),
+    create: () => Promise.resolve({}),
+    updateOne: () => Promise.resolve({}),
+  };
+  Order = mockModel as unknown as Model<IOrder>;
+  console.log('Using mock Order model for build.');
+} else {
+  // Use the real Mongoose model at runtime
+  Order = mongoose.models.Order || mongoose.model<IOrder>('Order', orderSchema);
 }
 
-const Order = mongoose.model<IOrder>('Order', orderSchema);
 export default Order;

@@ -3,6 +3,7 @@ import dbConnect from '@/lib/db';
 import Order from '@/lib/models/order';
 import { requireAuth } from '@/lib/auth/utils';
 
+export const dynamic = 'force-dynamic';
 // Get single order
 export async function GET(
   request: NextRequest,

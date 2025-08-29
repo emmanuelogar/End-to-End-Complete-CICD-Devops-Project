@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic';
-
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Product from '@/lib/models/product';
@@ -19,6 +17,8 @@ const categoryMap: { [key: string]: string } = {
   snacks: 'grocery',
   bakery: 'bakery'
 };
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {

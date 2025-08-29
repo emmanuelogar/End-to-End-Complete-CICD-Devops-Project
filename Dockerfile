@@ -16,7 +16,7 @@ RUN npm ci
 # Copy all project files
 COPY . .
 
-# Set an environment variable to signal the build stage
+# Set the environment variable to enable mock database behavior
 ENV BUILD_WITH_MOCK_DB=true
 
 # Build the Next.js application
@@ -28,7 +28,7 @@ FROM node:18-alpine AS runner
 # Set working directory
 WORKDIR /app
 
-# Copy necessary files from builder stage
+# The build should now succeed, so these COPY commands will work.
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public

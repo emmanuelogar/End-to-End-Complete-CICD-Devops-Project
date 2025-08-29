@@ -5,6 +5,8 @@ import Cart from '@/lib/models/cart';
 import Product from '@/lib/models/product';
 import { requireAuth } from '@/lib/auth/utils';
 
+export const dynamic = 'force-dynamic';
+
 // Get user's orders
 export async function GET(request: NextRequest) {
   try {

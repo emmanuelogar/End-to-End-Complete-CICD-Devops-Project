@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser {
@@ -54,22 +54,43 @@ const userSchema = new mongoose.Schema<IUser>({
   timestamps: true,
 });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error: any) {
-    next(error);
-  }
-});
+// Check for the build environment flag
+const IS_BUILD_MODE = process.env.BUILD_WITH_MOCK_DB === 'true';
 
-// Method to check if password matches
-userSchema.methods.matchPassword = async function(enteredPassword: string) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
+let User: Model<IUser>;
 
-export default mongoose.models.User || mongoose.model<IUser>('User', userSchema);
+if (IS_BUILD_MODE) {
+  // Return a mock model for the build process
+  const mockModel = {
+    find: () => Promise.resolve([]),
+    findOne: () => Promise.resolve(null),
+    findById: () => Promise.resolve(null),
+    create: () => Promise.resolve({}),
+    updateOne: () => Promise.resolve({}),
+  };
+  User = mockModel as unknown as Model<IUser>;
+  console.log('Using mock User model for build.');
+} else {
+  // Hash password before saving
+  userSchema.pre('save', async function(next) {
+    if (!this.isModified('password')) return next();
+    
+    try {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+      next();
+    } catch (error: any) {
+      next(error);
+    }
+  });
+
+  // Method to check if password matches
+  userSchema.methods.matchPassword = async function(enteredPassword: string) {
+    return await bcrypt.compare(enteredPassword, this.password);
+  };
+
+  // Use the real Mongoose model at runtime
+  User = mongoose.models.User || mongoose.model<IUser>('User', userSchema);
+}
+
+export default User;

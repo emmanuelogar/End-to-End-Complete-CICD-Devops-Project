@@ -3,6 +3,8 @@ import User from "@/lib/models/user";
 import dbConnect from "@/lib/db";
 import { generateToken } from "@/lib/auth/utils";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();

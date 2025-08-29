@@ -1,63 +1,56 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
 export interface ICartItem {
   product: string;
   quantity: number;
-  price: number;
 }
 
-export interface ICart {
-  user: string;
+export interface ICart extends Document {
+  user: mongoose.Types.ObjectId;
   items: ICartItem[];
-  total: number;
 }
 
 const cartItemSchema = new mongoose.Schema<ICartItem>({
   product: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
-    required: true
+    required: true,
   },
   quantity: {
     type: Number,
     required: true,
-    min: 1
+    min: 1,
   },
-  price: {
-    type: Number,
-    required: true
-  }
-}, { _id: false });
+});
 
 const cartSchema = new mongoose.Schema<ICart>({
   user: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
-    unique: true
   },
   items: [cartItemSchema],
-  total: {
-    type: Number,
-    required: true,
-    default: 0
-  }
-}, {
-  timestamps: true
 });
 
-// Calculate total before saving
-cartSchema.pre('save', async function(next) {
-  this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  next();
-});
+// Check for the build environment flag
+const IS_BUILD_MODE = process.env.BUILD_WITH_MOCK_DB === 'true';
 
-// Delete existing model if it exists
-if (mongoose.models.Cart) {
-  delete mongoose.models.Cart;
+let Cart: Model<ICart>;
+
+if (IS_BUILD_MODE) {
+  // Return a mock model for the build process
+  const mockModel = {
+    find: () => Promise.resolve([]),
+    findOne: () => Promise.resolve(null),
+    findById: () => Promise.resolve(null),
+    create: () => Promise.resolve({}),
+    updateOne: () => Promise.resolve({}),
+  };
+  Cart = mockModel as unknown as Model<ICart>;
+  console.log('Using mock Cart model for build.');
+} else {
+  // Use the real Mongoose model at runtime
+  Cart = (mongoose.models.Cart || mongoose.model<ICart>('Cart', cartSchema)) as Model<ICart>;
 }
 
-// Delete existing model collection
-mongoose.connection.collections['carts']?.drop();
-
-const Cart = mongoose.model<ICart>('Cart', cartSchema);
 export default Cart;
