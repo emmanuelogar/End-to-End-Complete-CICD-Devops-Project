@@ -1,8 +1,10 @@
-import mongoose, { Model, Document } from 'mongoose';
+import mongoose, { Model, Document, Types } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-// The new interface should extend Mongoose's Document and include your custom methods
+// The new interface now correctly represents a Mongoose document
+// and includes custom methods and the _id property.
 export interface IUser extends Document {
+  _id: Types.ObjectId;
   name: string;
   email: string;
   password: string;
@@ -64,6 +66,7 @@ let User: Model<IUser>;
 
 if (IS_BUILD_MODE) {
   // Return a mock model for the build process
+  // This object mimics the required Mongoose methods but without a database connection.
   const mockModel = {
     find: () => Promise.resolve([]),
     findOne: () => Promise.resolve(null),
@@ -74,6 +77,8 @@ if (IS_BUILD_MODE) {
   User = mockModel as unknown as Model<IUser>;
   console.log('Using mock User model for build.');
 } else {
+  // This code runs only in a production environment with a database.
+  
   // Hash password before saving
   userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
