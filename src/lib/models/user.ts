@@ -1,7 +1,8 @@
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-export interface IUser {
+// The new interface should extend Mongoose's Document and include your custom methods
+export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
@@ -16,6 +17,8 @@ export interface IUser {
   }[];
   createdAt: Date;
   updatedAt: Date;
+  // Add the method signature for matchPassword here
+  matchPassword(enteredPassword: string): Promise<boolean>;
 }
 
 const userSchema = new mongoose.Schema<IUser>({
@@ -33,7 +36,7 @@ const userSchema = new mongoose.Schema<IUser>({
     type: String,
     required: [true, 'Please provide a password'],
     minlength: 8,
-    select: false, // Don't include password in queries by default
+    select: false,
   },
   role: {
     type: String,
