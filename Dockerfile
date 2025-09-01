@@ -1,43 +1,38 @@
-# Stage 1: Development/Build Stage
-FROM node:18-alpine AS builder
+# -------------------------
+# 1. Builder stage
+# -------------------------
+    FROM node:18-alpine AS builder
 
-# Set working directory
-WORKDIR /app
-
-# Install necessary build dependencies
-RUN apk add --no-cache python3 make g++
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci
-
-# Copy all project files
-COPY . .
-
-# Set the environment variable to enable mock database behavior
-ENV BUILD_WITH_MOCK_DB=true
-
-# Build the Next.js application
-RUN npm run build
-
-# Stage 2: Production Stage
-FROM node:18-alpine AS runner
-
-# Set working directory
-WORKDIR /app
-
-# Copy the standalone build output
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/public ./public
-
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Expose the port the app runs on
-EXPOSE 3000
-
-# Command to run the application
-CMD ["node", "server.js"]
+    # Set work directory
+    WORKDIR /app
+    
+    # Install dependencies first (better caching)
+    COPY package*.json ./
+    RUN npm ci --legacy-peer-deps
+    
+    # Copy the source code
+    COPY . .
+    
+    # Build Next.js app (standalone output)
+    RUN npm run build
+    
+    # -------------------------
+    # 2. Runner stage
+    # -------------------------
+    FROM node:18-alpine AS runner
+    
+    # Set work directory
+    WORKDIR /app
+    
+    # Copy only the standalone output and static assets
+    COPY --from=builder /app/.next/standalone ./
+    COPY --from=builder /app/.next/static ./.next/static
+    COPY --from=builder /app/public ./public
+    COPY --from=builder /app/package*.json ./
+    
+    # Expose port
+    EXPOSE 3000
+    
+    # Start Next.js app
+    CMD ["node", "server.js"]
+    
