@@ -13,7 +13,7 @@ env:
 
 jobs:
   # -------------------------
-  # 1. Run Tests (Full CI Tests)
+  # 1. Run Tests
   # -------------------------
   test:
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
         run: npm run test:e2e --if-present
 
   # -------------------------
-  # 2. Build & Push Images (depends on tests passing)
+  # 2. Build, Scan, Push
   # -------------------------
   build:
     runs-on: ubuntu-latest
@@ -64,27 +64,27 @@ jobs:
         id: vars
         run: echo "tag=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
 
-      # Build & Push Main App
-      - name: Build & Push Main App Image
+      # -------------------------
+      # First build (no push) → Scan
+      # -------------------------
+      - name: Build Main App Image (no push)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          push: false
           no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
-      # Build & Push Migration
-      - name: Build & Push Migration Image
+      - name: Build Migration Image (no push)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./scripts/Dockerfile.migration
-          push: true
+          push: false
           no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
-      # Security Scans
       - name: Security Scan with Trivy (Main App)
         uses: aquasecurity/trivy-action@0.20.0
         with:
@@ -97,7 +97,28 @@ jobs:
           image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
           severity: HIGH,CRITICAL
 
+      # -------------------------
+      # Second build (push if scan passes)
+      # -------------------------
+      - name: Push Main App Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+
+      - name: Push Migration Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./scripts/Dockerfile.migration
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+
+      # -------------------------
       # Update Helm Manifests
+      # -------------------------
       - name: Update Kubernetes Manifests
         run: |
           git config user.name "GitHub Actions"
