@@ -13,7 +13,7 @@ env:
 
 jobs:
   # -------------------------
-  # 1. Run Tests
+  # 1. Run Tests (Full CI Tests)
   # -------------------------
   test:
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
         run: npm run test:e2e --if-present
 
   # -------------------------
-  # 2. Build, Scan, Push
+  # 2. Build & Push Images (depends on tests passing)
   # -------------------------
   build:
     runs-on: ubuntu-latest
@@ -106,6 +106,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
       - name: Push Migration Image
@@ -114,6 +115,7 @@ jobs:
           context: .
           file: ./scripts/Dockerfile.migration
           push: true
+          no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
       # -------------------------
