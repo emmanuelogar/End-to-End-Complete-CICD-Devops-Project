@@ -41,8 +41,7 @@ jobs:
   # -------------------------
   build:
     runs-on: ubuntu-latest
-    needs: test   # 👈 ensures tests must pass before build runs
-
+    needs: test
     permissions:
       contents: write
       packages: write
@@ -65,24 +64,27 @@ jobs:
         id: vars
         run: echo "tag=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
 
-      - name: Build Main App Image
+      # Build & Push Main App
+      - name: Build & Push Main App Image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          push: false
+          push: true
           no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
-      - name: Build Migration Image
+      # Build & Push Migration
+      - name: Build & Push Migration Image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./scripts/Dockerfile.migration
-          push: false
+          push: true
           no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
+      # Security Scans
       - name: Security Scan with Trivy (Main App)
         uses: aquasecurity/trivy-action@0.20.0
         with:
@@ -95,32 +97,17 @@ jobs:
           image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
           severity: HIGH,CRITICAL
 
-      - name: Push Main App Image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
-
-      - name: Push Migration Image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./scripts/Dockerfile.migration
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
-
+      # Update Helm Manifests
       - name: Update Kubernetes Manifests
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-      
+
           yq -i ".image.repository = \"ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}\"" kubernetes/helm/easyshop/values.yaml
           yq -i ".image.tag = \"${{ steps.vars.outputs.tag }}\"" kubernetes/helm/easyshop/values.yaml
-      
+
           yq -i ".migrationJob.image = \"ghcr.io/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}\"" kubernetes/helm/easyshop/values.yaml
-      
+
           git add kubernetes/
           git commit -m "Update manifests with image tag ${{ steps.vars.outputs.tag }}"
           git push
