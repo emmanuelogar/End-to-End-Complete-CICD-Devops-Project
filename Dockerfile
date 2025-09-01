@@ -28,9 +28,8 @@ FROM node:18-alpine AS runner
 # Set working directory
 WORKDIR /app
 
-# The build should now succeed, so these COPY commands will work.
+# Copy the standalone build output
 COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
 # Set environment variables
