@@ -71,6 +71,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
+          no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
       - name: Build Migration Image
@@ -79,6 +80,7 @@ jobs:
           context: .
           file: ./scripts/Dockerfile.migration
           push: false
+          no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
       - name: Security Scan with Trivy (Main App)
