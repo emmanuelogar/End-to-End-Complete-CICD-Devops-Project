@@ -37,7 +37,7 @@ jobs:
         run: npm run test:e2e --if-present
 
   # -------------------------
-  # 2. Build & Push Images (depends on tests passing)
+  # 2. Build, Scan & Push Images
   # -------------------------
   build:
     runs-on: ubuntu-latest
@@ -65,40 +65,43 @@ jobs:
         run: echo "tag=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
 
       # -------------------------
-      # First build (no push) → Scan
+      # First build → local only
       # -------------------------
-      - name: Build Main App Image (no push)
+      - name: Build Main App Image (local only)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
           push: false
-          no-cache: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+          tags: cicd:main
 
-      - name: Build Migration Image (no push)
+      - name: Build Migration Image (local only)
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./scripts/Dockerfile.migration
           push: false
-          no-cache: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+          tags: cicd:migration
 
+      # -------------------------
+      # Security Scans (local images)
+      # -------------------------
       - name: Security Scan with Trivy (Main App)
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+          image-ref: cicd:main
           severity: HIGH,CRITICAL
+          vuln-type: os,library
 
       - name: Security Scan with Trivy (Migration)
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+          image-ref: cicd:migration
           severity: HIGH,CRITICAL
+          vuln-type: os,library
 
       # -------------------------
-      # Second build (push if scan passes)
+      # Second build → push if scan passes
       # -------------------------
       - name: Push Main App Image
         uses: docker/build-push-action@v6
@@ -106,7 +109,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
       - name: Push Migration Image
@@ -115,7 +117,6 @@ jobs:
           context: .
           file: ./scripts/Dockerfile.migration
           push: true
-          no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
 
       # -------------------------
