@@ -136,26 +136,24 @@ kubectl get nodes
 ```
 
 ### Nginx ingress controller:<br/>
-> 1. Install the Nginx Ingress Controller using Helm:
-```bash
-kubectl create namespace ingress-nginx
-```
-> 2. Add the Nginx Ingress Controller Helm repository:
+> 1. Install the Nginx Ingress Controller using Helm: Add the Nginx Ingress Controller Helm repository:
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 ```
-> 3. Install the Nginx Ingress Controller:
+> 2. Install the Nginx Ingress Controller:
 ```bash
+#> - move to the root directory of this repo: 
+cd ../../
 helm install nginx-ingress ingress-nginx/ingress-nginx \
-  --namespace ingress-nginx \
-  --set controller.service.type=LoadBalancer
+  --namespace ingress-nginx --create-namespace \
+  -f helm-values/ingress_nginx-values.yaml
 ```
-> 4. Check the status of the Nginx Ingress Controller:
+> 3. Check the status of the Nginx Ingress Controller:
 ```bash
 kubectl get pods -n ingress-nginx
 ```
-> 5. Get the external IP address of the LoadBalancer service:
+> 4. Get the external IP address of the LoadBalancer service:
 ```bash
 kubectl get svc -n ingress-nginx
 ```
@@ -180,24 +178,29 @@ helm install cert-manager jetstack/cert-manager \
 kubectl get pods -n cert-manager
 ```
 
-> 4. **DNS Setup:** Find your DNS name from the LoadBalancer service:
+> 4. Apply the Clusterissuer:
 ```bash
-kubectl get svc nginx-ingress-ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+kubectl apply -f helm-values/clusterissuer.yaml
 ```
-> 5. Create a DNS record for your domain pointing to the LoadBalancer IP.
+
+> 5. **DNS Setup:** Find your IP from the LoadBalancer service:
+```bash
+kubectl get svc nginx-ingress-ingress-nginx-controller -n ingress-nginx \
+  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+> 6. Create a DNS record for your domain pointing to the LoadBalancer IP.
 > - Go to your godaddy dashboard or your prefered Domain name registrar and create a new A record and map the IP you just got in the terminal.
 
-**12. Argo CD Setup**<br/>
-Create a Namespace for Argo CD<br/>
-```bash
-kubectl create namespace argocd
-```
+**1. Argo CD Setup**<br/>
 1. Install Argo CD using helm  
 (https://artifacthub.io/packages/helm/argo/argo-cd)
+
 ```bash
+kubectl create namespace argocd
 helm repo add argo https://argoproj.github.io/argo-helm
-helm install my-argo-cd argo/argo-cd -f helm-values/argocd-values.yaml
+helm install argo-cd argo/argo-cd -f helm-values/argocd-values.yaml -n argocd
 ```
+
 2. add the record in your domain registrar “argocd.domain” with load balancer ip.
 
 3. access it in browser.
@@ -253,8 +256,7 @@ https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
 ```jsx
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm install my-kube-prometheus-stack prometheus-community/kube-prometheus-stack -f helm-values/kube-prom-stack.yaml \
-    --namespace monitoring \
-    --create-namespace \
+    -n monitoring \
 ```
 
 verify deployment :
@@ -296,7 +298,7 @@ You would get the notification in the slack’s respective channel.
 
 ```jsx
 helm repo add elastic https://helm.elastic.co
-helm install my-elasticsearch elastic/elasticsearch -f helm-values/elasticsearch.yaml  --namespace logging --create-namespace
+helm install my-elasticsearch elastic/elasticsearch -f helm-values/elasticsearch.yaml  -n logging
 ```
 make sure the pod is running .
 

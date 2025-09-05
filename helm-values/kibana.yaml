@@ -1,16 +1,14 @@
-
 ingress:
   enabled: true
   className: nginx
   pathtype: Prefix
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: logs-kibana.devdeploy.site
+    - host: kibana.devdeploy.site
       paths:
         - path: /
   tls:
-    - secretName: easyshop-tls
+    - secretName: logging-tls
       hosts:
-        - "*.devdeploy.site"
+        - kibana.devdeploy.site

@@ -4,7 +4,7 @@ metadata:
   name: letsencrypt-prod
 spec:
   acme:
-    email: your-email@example.com
+    email: your-email@gmail.com
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: letsencrypt-prod
@@ -12,3 +12,45 @@ spec:
       - http01:
           ingress:
             class: nginx
+
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: argocd-cert
+#   namespace: argocd
+# spec:
+#   secretName: argocd-tls
+#   dnsNames:
+#     - argocd.pashione.co
+#   issuerRef:
+#     name: letsencrypt-prod
+#     kind: ClusterIssuer
+
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: monitoring-cert
+#   namespace: monitoring
+# spec:
+#   secretName: monitoring-tls
+#   dnsNames:
+#     - grafana.pashione.co
+#   issuerRef:
+#     name: letsencrypt-prod
+#     kind: ClusterIssuer
+
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: logging-cert
+#   namespace: logging
+# spec:
+#   secretName: logging-tls
+#   dnsNames:
+#     - kibana.pashione.co
+#   issuerRef:
+#     name: letsencrypt-prod
+#     kind: ClusterIssuer

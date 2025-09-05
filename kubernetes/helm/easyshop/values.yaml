@@ -78,3 +78,8 @@ migrationJob:
   name: db-migration
   image: ghcr.io/emmanuelogar/easyshop-migration:29
   mongodbUri: "mongodb://mongodb-service:27017/easyshop"
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80

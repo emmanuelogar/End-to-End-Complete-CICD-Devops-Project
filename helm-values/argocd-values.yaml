@@ -1,21 +1,20 @@
-  # Argo CD server ingress configuration
+global:
+  domain: argocd.devdeploy.site
+
+configs:
+  params:
+    server.insecure: true
+
+server:
   ingress:
     enabled: true
+    ingressClassName: nginx
     annotations:
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-      cert-manager.io/cluster-issuer: letsencrypt
-
-    ingressClassName: nginx
-
-    hostname: argocd.devdeploy.site
-
-    path: /
-
-    pathType: Prefix
-    # -- TLS configuration for the ingress
-    tls: false
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
     extraTls:
-        - hosts:
-          - argocd.emmanuelogar.website
-          secretName: easyshop-tls
+      - hosts:
+        - argocd.devdeploy.site
+        # Based on the ingress controller used secret might be optional
+        secretName: argocd-tls

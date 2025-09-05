@@ -1,0 +1,14 @@
+controller:
+  service:
+    annotations:
+      service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+    targetPorts:
+      http: http
+      https: https
+    ports:
+      http: 80
+      https: 443
+  metrics:
+    enabled: true
+  config:
+    ssl-protocols: "TLSv1.2 TLSv1.3"

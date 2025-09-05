@@ -8,9 +8,9 @@ alertmanager:
     hosts:
       - alertmanager.devdeploy.site
     tls:
-      - secretName: easyshop-tls
+      - secretName: monitoring-tls
         hosts:
-          - "*.devdeploy.site"
+          - alertmanager.devdeploy.site
   config:
       global:
         resolve_timeout: 5m
@@ -43,9 +43,9 @@ grafana:
     hosts:
       - grafana.devdeploy.site
     tls: 
-      - secretName: easyshop-tls # wildcard tls
+      - secretName: monitoring-tls
         hosts:
-        - "*.devdeploy.site"
+        - grafana.devdeploy.site
   adminUser: admin
   adminPassword: "admin"
   datasources:
@@ -85,9 +85,9 @@ prometheus:
     hosts:
       - prometheus.devdeploy.site
     tls:
-      - secretName: easyshop-tls
+      - secretName: monitoring-tls
         hosts:
-          - "*.devdeploy.site"
+          - "prometheus.devdeploy.site"
   alertmanager:
     enabled: false
   pushgateway:
