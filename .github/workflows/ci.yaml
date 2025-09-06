@@ -35,18 +35,17 @@ jobs:
 
       - name: Extract Git metadata
         id: vars
-        run: |
-          echo "tag=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+        run: echo "tag=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
 
-          - name: build & push Main App Image
-          uses: docker/build-push-action@v6
-          with:
-            context: .
-            file: ./Dockerfile
-            push: true
-            no-cache: true
-            tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
-  
+      - name: Build & Push Main App Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          no-cache: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+
       - name: Build & Push Migration Image
         uses: docker/build-push-action@v6
         with:
@@ -55,7 +54,7 @@ jobs:
           push: true
           no-cache: true
           tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.MIGRATION_IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
-  
+
       - name: Update Kubernetes Manifests
         run: |
           git config user.name "GitHub Actions"
