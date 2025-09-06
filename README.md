@@ -272,12 +272,12 @@ verify deployment :
 kubectl get pods -n monitoring
 ```
 
-**Grafana:**
-https://grafana.devdeploy.site/
-**Prometheus:** 
-https://prometheus.devdeploy.site/
-**Alertmanger:**
-https://alertmanager.devdeploy.site/
+>**Grafana:** https://grafana.devdeploy.site/
+
+>**Prometheus:** https://prometheus.devdeploy.site/
+
+>**Alertmanger:** https://alertmanager.devdeploy.site/
+
 **Alerting to Slack** 
 
 Create a new workspace in slack, create a new channel e.g. “#alerts”

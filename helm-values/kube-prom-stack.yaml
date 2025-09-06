@@ -27,7 +27,7 @@ alertmanager:
       receivers:
       - name: 'slack-notification'
         slack_configs:
-            - api_url: 'https://hooks.slack.com/services/T08ULBZB5UY/B08U0CE3DEG/OivCLYq28gNzz4TabiY5zUj'
+            - api_url: 'https://hooks.slack.com/services/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'
               channel: '#alerts'
               send_resolved: true
       templates:
