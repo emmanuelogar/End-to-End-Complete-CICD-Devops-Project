@@ -3,7 +3,7 @@ namespace: easyshop
 replicaCount: 2
 image:
   repository: ghcr.io/emmanuelogar/easyshop-app
-  tag: "29"
+  tag: "31"
   pullPolicy: Always
 service:
   type: NodePort
@@ -76,7 +76,7 @@ mongodb:
 migrationJob:
   enabled: true
   name: db-migration
-  image: ghcr.io/emmanuelogar/easyshop-migration:29
+  image: ghcr.io/emmanuelogar/easyshop-migration:31
   mongodbUri: "mongodb://mongodb-service:27017/easyshop"
 autoscaling:
   enabled: false
