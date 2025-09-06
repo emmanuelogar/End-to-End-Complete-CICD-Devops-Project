@@ -1,37 +1,41 @@
-# -------------------------
-# 1. Builder stage
-# -------------------------
+# Stage 1: Development/Build Stage
 FROM node:18-alpine AS builder
 
-# Set work directory
+# Set working directory
 WORKDIR /app
 
-# Install dependencies first (better caching)
-COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+# Install necessary build dependencies
+RUN apk add --no-cache python3 make g++
 
-# Copy the source code
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy all project files
 COPY . .
 
-# Build Next.js app (standalone output)
+# Build the Next.js application
 RUN npm run build
 
-# -------------------------
-# 2. Runner stage
-# -------------------------
+# Stage 2: Production Stage
 FROM node:18-alpine AS runner
 
-# Set work directory
+# Set working directory
 WORKDIR /app
 
-# Copy Next.js output
-COPY --from=builder /app/.next ./.next
+# Copy necessary files from builder stage
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
 
-# Expose port
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Expose the port the app runs on
 EXPOSE 3000
 
-# Start Next.js app
+# Command to run the application
 CMD ["node", "server.js"]
-    

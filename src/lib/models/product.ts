@@ -1,4 +1,4 @@
-import mongoose, { Model } from 'mongoose';
+import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
   originalId: {
@@ -56,23 +56,4 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Access the environment variable, but with a fallback in case it's not set
-const IS_BUILD_MODE = process.env.BUILD_WITH_MOCK_DB === 'true';
-
-let Product: mongoose.Model<any>;
-
-// Conditionally export the model
-if (IS_BUILD_MODE) {
-  // Mock the model's methods for the build environment
-  const mockModel = {
-    find: () => Promise.resolve([]),
-    // Add other necessary mocked methods as needed
-    // e.g., findOne, findById, create, updateOne, etc.
-  };
-  Product = mockModel as any;
-} else {
-  // Use the real Mongoose model at runtime
-  Product = mongoose.models.Product || mongoose.model('Product', productSchema);
-}
-
-export default Product;
+export default mongoose.models.Product || mongoose.model('Product', productSchema);

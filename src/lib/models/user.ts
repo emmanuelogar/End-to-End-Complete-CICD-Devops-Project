@@ -1,10 +1,7 @@
-import mongoose, { Model, Document, Types } from 'mongoose';
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-// The new interface now correctly represents a Mongoose document
-// and includes custom methods and the _id property.
-export interface IUser extends Document {
-  _id: Types.ObjectId;
+export interface IUser {
   name: string;
   email: string;
   password: string;
@@ -19,8 +16,6 @@ export interface IUser extends Document {
   }[];
   createdAt: Date;
   updatedAt: Date;
-  // Add the method signature for matchPassword here
-  matchPassword(enteredPassword: string): Promise<boolean>;
 }
 
 const userSchema = new mongoose.Schema<IUser>({
@@ -38,7 +33,7 @@ const userSchema = new mongoose.Schema<IUser>({
     type: String,
     required: [true, 'Please provide a password'],
     minlength: 8,
-    select: false,
+    select: false, // Don't include password in queries by default
   },
   role: {
     type: String,
@@ -59,46 +54,22 @@ const userSchema = new mongoose.Schema<IUser>({
   timestamps: true,
 });
 
-// Check for the build environment flag
-const IS_BUILD_MODE = process.env.BUILD_WITH_MOCK_DB === 'true';
-
-let User: Model<IUser>;
-
-if (IS_BUILD_MODE) {
-  // Return a mock model for the build process
-  // This object mimics the required Mongoose methods but without a database connection.
-  const mockModel = {
-    find: () => Promise.resolve([]),
-    findOne: () => Promise.resolve(null),
-    findById: () => Promise.resolve(null),
-    create: () => Promise.resolve({}),
-    updateOne: () => Promise.resolve({}),
-  };
-  User = mockModel as unknown as Model<IUser>;
-  console.log('Using mock User model for build.');
-} else {
-  // This code runs only in a production environment with a database.
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
   
-  // Hash password before saving
-  userSchema.pre('save', async function(next) {
-    if (!this.isModified('password')) return next();
-    
-    try {
-      const salt = await bcrypt.genSalt(10);
-      this.password = await bcrypt.hash(this.password, salt);
-      next();
-    } catch (error: any) {
-      next(error);
-    }
-  });
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error: any) {
+    next(error);
+  }
+});
 
-  // Method to check if password matches
-  userSchema.methods.matchPassword = async function(enteredPassword: string) {
-    return await bcrypt.compare(enteredPassword, this.password);
-  };
+// Method to check if password matches
+userSchema.methods.matchPassword = async function(enteredPassword: string) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
-  // Use the real Mongoose model at runtime
-  User = mongoose.models.User || mongoose.model<IUser>('User', userSchema);
-}
-
-export default User;
+export default mongoose.models.User || mongoose.model<IUser>('User', userSchema);

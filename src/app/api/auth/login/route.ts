@@ -1,10 +1,7 @@
-// src/app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import User, { IUser } from "@/lib/models/user";
+import User from "@/lib/models/user";
 import dbConnect from "@/lib/db";
 import { generateToken } from "@/lib/auth/utils";
-
-export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +11,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Login attempt for:', email);
 
+    // Find user and include password for comparison
     const user = await User.findOne({ email }).select("+password");
-
     if (!user) {
       console.log('User not found:', email);
       return NextResponse.json(
@@ -23,11 +20,9 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-    
-    // Explicitly cast to IUser after the null check
-    const typedUser = user as IUser;
 
-    const isMatch = await typedUser.matchPassword(password);
+    // Check password
+    const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       console.log('Invalid password for user:', email);
       return NextResponse.json(
@@ -36,25 +31,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Generate token with proper payload structure
     const tokenPayload = {
-      // TypeScript now knows that typedUser._id is a valid ObjectId
-      userId: typedUser._id.toString(),
-      role: typedUser.role,
+      userId: user._id.toString(),
+      role: user.role,
     };
     console.log('Generating token with payload:', tokenPayload);
     const token = await generateToken(tokenPayload);
 
+    // Create response
     const response = NextResponse.json({
       success: true,
       user: {
-        id: typedUser._id,
-        name: typedUser.name,
-        email: typedUser.email,
-        role: typedUser.role,
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
       },
       token,
     });
 
+    // Set token in HTTP-only cookie
     response.cookies.set({
       name: "token",
       value: token,
@@ -62,7 +59,7 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 30 * 24 * 60 * 60
+      maxAge: 30 * 24 * 60 * 60 // 30 days
     });
 
     console.log('Login successful for:', email);

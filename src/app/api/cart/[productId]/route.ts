@@ -3,8 +3,6 @@ import dbConnect from '@/lib/db';
 import Cart from '@/lib/models/cart';
 import { requireAuth } from '@/lib/auth/utils';
 
-export const dynamic = 'force-dynamic';
-
 // Update cart item quantity
 export async function PUT(
   request: NextRequest,

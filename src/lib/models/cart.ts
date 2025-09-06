@@ -1,67 +1,63 @@
-import mongoose, { Document, Model, Types } from 'mongoose';
+import mongoose from 'mongoose';
 
 export interface ICartItem {
-  product: Types.ObjectId;
+  product: string;
   quantity: number;
   price: number;
 }
 
-export interface ICart extends Document {
-  _id: Types.ObjectId;
-  user: mongoose.Types.ObjectId;
+export interface ICart {
+  user: string;
   items: ICartItem[];
   total: number;
 }
 
 const cartItemSchema = new mongoose.Schema<ICartItem>({
   product: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     ref: 'Product',
-    required: true,
+    required: true
   },
   quantity: {
     type: Number,
     required: true,
-    min: 1,
+    min: 1
   },
   price: {
     type: Number,
-    required: true,
+    required: true
   }
-});
+}, { _id: false });
 
 const cartSchema = new mongoose.Schema<ICart>({
   user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
     required: true,
+    unique: true
   },
   items: [cartItemSchema],
   total: {
     type: Number,
+    required: true,
     default: 0
   }
+}, {
+  timestamps: true
 });
 
-// Check for the build environment flag
-const IS_BUILD_MODE = process.env.BUILD_WITH_MOCK_DB === 'true';
+// Calculate total before saving
+cartSchema.pre('save', async function(next) {
+  this.total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  next();
+});
 
-let Cart: Model<ICart>;
-
-if (IS_BUILD_MODE) {
-  // Return a mock model for the build process
-  const mockModel = {
-    find: () => Promise.resolve([]),
-    findOne: () => Promise.resolve(null),
-    findById: () => Promise.resolve(null),
-    create: () => Promise.resolve({}),
-    updateOne: () => Promise.resolve({}),
-  };
-  Cart = mockModel as unknown as Model<ICart>;
-  console.log('Using mock Cart model for build.');
-} else {
-  // Use the real Mongoose model at runtime
-  Cart = (mongoose.models.Cart || mongoose.model<ICart>('Cart', cartSchema)) as Model<ICart>;
+// Delete existing model if it exists
+if (mongoose.models.Cart) {
+  delete mongoose.models.Cart;
 }
 
+// Delete existing model collection
+mongoose.connection.collections['carts']?.drop();
+
+const Cart = mongoose.model<ICart>('Cart', cartSchema);
 export default Cart;
