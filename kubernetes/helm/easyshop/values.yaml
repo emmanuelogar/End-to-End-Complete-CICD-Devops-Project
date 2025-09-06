@@ -1,6 +1,6 @@
 name: easyshop
 namespace: easyshop
-replicaCount: 2
+replicaCount: 1
 image:
   repository: ghcr.io/emmanuelogar/easyshop-app
   tag: "31"
@@ -15,7 +15,7 @@ ingress:
   ingressClassName: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-  host: easyshop.emmanuelogar.website
+  host: easyshop.devdeploy.site
   tlsSecret: easyshop-tls
 resources:
   requests:
@@ -50,12 +50,12 @@ hpa:
   targetCPUUtilization: 70
 config:
   MONGODB_URI: "mongodb://mongodb-service:27017/easyshop"
-  NODE_ENV: "dev"
-  NEXT_PUBLIC_API_URL: "https://easyshop.emmanuelogar.website/api"
-  NEXTAUTH_URL: "https://easyshop.emmanuelogar.website/"
+  NODE_ENV: "production"
+  NEXT_PUBLIC_API_URL: "https://easyshop.devdeploy.site/api"
+  NEXTAUTH_URL: "https://easyshop.devdeploy.site/"
 secrets:
-  NEXTAUTH_SECRET: "changeme-demo"
-  JWT_SECRET: "changeme-demo"
+  NEXTAUTH_SECRET: "change-this-in-production"
+  JWT_SECRET: "change-this-in-production"
 mongodb:
   name: mongodb
   replicas: 1

@@ -200,6 +200,10 @@ kubectl create namespace argocd
 helm repo add argo https://argoproj.github.io/argo-helm
 helm install argo-cd argo/argo-cd -f helm-values/argocd-values.yaml -n argocd
 ```
+create easyshop namespace
+```bash
+kubectl create ns easyshop
+```
 
 2. add the record in your domain registrar “argocd.domain” with load balancer ip.
 
