@@ -147,7 +147,7 @@ helm repo update
 cd ../../
 helm install nginx-ingress ingress-nginx/ingress-nginx \
   --namespace ingress-nginx --create-namespace \
-  -f helm-values/ingress_nginx-values.yaml
+  -f helm-values/ingress-nginx-values.yaml
 ```
 > 3. Check the status of the Nginx Ingress Controller:
 ```bash
@@ -240,16 +240,19 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 > - **Cluster URL:** [https://kubernetes.default.svc](https://kubernetes.default.svc/) (usually shown as "default")
 > - **Namespace:** easyshop (or your desired namespace)
 
+- **add A record to dns registra “easyshop.devdeploy.site”**
+
+- **Access your site now.**
+
 ### Install Metric Server
 
-- metric server install through helm chart
+- Install metric server if not already installed through helm chart
 ```
 https://artifacthub.io/packages/helm/metrics-server/metrics-server
 ```
 verify metric server.
 ```
-kubectl get pods -w
-kubectl top pods
+kubectl top pods -n easyshop
 ```
 ### Monitoring Using kube-prometheus-stack
 
@@ -259,8 +262,8 @@ https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack
 
 ```jsx
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install my-kube-prometheus-stack prometheus-community/kube-prometheus-stack -f helm-values/kube-prom-stack.yaml \
-    -n monitoring \
+helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack -f helm-values/kube-prom-stack.yaml \
+    --namespace monitoring --create-namespace
 ```
 
 verify deployment :
@@ -270,11 +273,11 @@ kubectl get pods -n monitoring
 ```
 
 **Grafana:**
-
+https://grafana.devdeploy.site/
 **Prometheus:** 
-
+https://prometheus.devdeploy.site/
 **Alertmanger:**
-
+https://alertmanager.devdeploy.site/
 **Alerting to Slack** 
 
 Create a new workspace in slack, create a new channel e.g. “#alerts”
@@ -290,7 +293,7 @@ Note: you can refer this DOCs for the slack configuration. “https://prometheus
 get grafana secret “user = admin”
 
 ```jsx
-kubectl --namespace monitoring get secrets my-kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo
+kubectl --namespace monitoring get secrets kube-prometheus-stack-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo
 ```
 
 You would get the notification in the slack’s respective channel.
@@ -302,15 +305,14 @@ You would get the notification in the slack’s respective channel.
 
 ```jsx
 helm repo add elastic https://helm.elastic.co
-helm install my-elasticsearch elastic/elasticsearch -f helm-values/elasticsearch.yaml  -n logging
+helm install elasticsearch elastic/elasticsearch -f helm-values/elasticsearch.yaml  --namespace logging --create-namespace
 ```
 make sure the pod is running .
 
 ```jsx
 kubectl get po -n logging
 NAME                     READY   STATUS    RESTARTS   AGE
-elastic-operator-0       1/1     Running   0          6h33m
-elasticsearch-master-0   1/1     Running   0          87m
+elasticsearch-master-0   1/1     Running   0          3m31s
 ```
 
 **FileBeat:**
@@ -319,17 +321,15 @@ install filebeat for log shipping.
 
 ```jsx
 helm repo add elastic https://helm.elastic.co
-helm install my-filebeat elastic/filebeat -f helm-values/elasticsearch.yaml -n logging
+helm install filebeat elastic/filebeat -f helm-values/filebeat.yaml -n logging
 ```
 Filebeat runs as a daemonset. check if its up.
 
 ```jsx
 kubectl get po -n logging
 NAME                         READY   STATUS    RESTARTS   AGE
-elastic-operator-0           1/1     Running   0          6h38m
-elasticsearch-master-0       1/1     Running   0          93m
-my-filebeat-filebeat-g79qs   1/1     Running   0          25s
-my-filebeat-filebeat-kh8mj   1/1     Running   0          25s
+elasticsearch-master-0           1/1     Running   0          5m09s
+filebeat-filebeat-bnf7v          1/1     Running   0          2m33s
 ```
 
 **Install Kibana:**
@@ -338,20 +338,17 @@ install kibana through helm.
 
 ```jsx
 helm repo add elastic https://helm.elastic.co
-helm install my-kibana elastic/kibana -n logging
+helm install kibana elastic/kibana -f helm-values/kibana.yaml -n logging
 ```
 
 Verify if it runs.
 
 ```jsx
 k get po -n logging
-NAME                               READY   STATUS    RESTARTS       AGE
-elastic-operator-0                 1/1     Running   0              8h
-elasticsearch-master-0             1/1     Running   0              3h50m
-my-filebeat-filebeat-g79qs         1/1     Running   0              138m
-my-filebeat-filebeat-jz42x         1/1     Running   0              108m
-my-filebeat-filebeat-kh8mj         1/1     Running   1 (137m ago)   138m
-my-kibana-kibana-559f75574-9s4xk   1/1     Running   0              130m
+NAME                             READY   STATUS    RESTARTS   AGE
+elasticsearch-master-0           1/1     Running   0          6m11s
+filebeat-filebeat-bnf7v          1/1     Running   0          3m23s
+kibana-kibana-5bbbc587f8-nkn2t   1/1     Running   0          2m29s
 ```
 
 add all the records to dns registrar and give the value as load balancer IP. and try to access one by one. 
@@ -394,7 +391,7 @@ kubectl get secrets --namespace=logging elasticsearch-master-credentials -ojsonp
 ---
 
 ### 📌 Kibana Logs View
-![Kibana](./public/kibana.JPG)
+![Kibana](./public/kibana.PNG)
 
 ---
 

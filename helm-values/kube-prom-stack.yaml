@@ -8,9 +8,9 @@ alertmanager:
     hosts:
       - alertmanager.devdeploy.site
     tls:
-      - secretName: monitoring-tls
+      - secretName: alertmanager-tls
         hosts:
-          - alertmanager.devdeploy.site
+          - "alertmanager.devdeploy.site"
   config:
       global:
         resolve_timeout: 5m
@@ -43,37 +43,11 @@ grafana:
     hosts:
       - grafana.devdeploy.site
     tls: 
-      - secretName: monitoring-tls
+      - secretName: grafana-tls
         hosts:
-        - grafana.devdeploy.site
+        - "grafana.devdeploy.site"
   adminUser: admin
   adminPassword: "admin"
-  datasources:
-    datasources.yaml:
-      apiVersion: 1
-      datasources:
-        - name: Prometheus
-          type: prometheus
-          access: proxy
-          url: http://prometheus-server
-          isDefault: true
-  dashboards:
-    default:
-      easyshop-dashboard:
-        gnetId: 7255
-        revision: 1
-        datasource: Prometheus
-  dashboardProviders:
-    dashboardproviders.yaml:
-      apiVersion: 1
-      providers:
-        - name: 'default'
-          orgId: 1
-          folder: ''
-          type: file
-          disableDeletion: false
-          editable: true
-          options:    
 
 prometheus:
   enabled: true
@@ -85,7 +59,7 @@ prometheus:
     hosts:
       - prometheus.devdeploy.site
     tls:
-      - secretName: monitoring-tls
+      - secretName: prometheus-tls
         hosts:
           - "prometheus.devdeploy.site"
   alertmanager:
