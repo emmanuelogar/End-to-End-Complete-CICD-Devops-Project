@@ -106,31 +106,69 @@ First, clone this repo to your local machine:<br/>
 git clone https://github.com/emmanuelogar/End-to-End-Complete-CICD-Devops-Project.git
 cd terraform/aks
 ```
-2. **Initialize Terraform:**
+2. **State management with Azure Storage:**
+Terraform uses state files to keep track of the resources it manages. These state files are stored locally by default, but it's a best practice to store them remotely, especially when working in teams or in production environments.
+
+To store the Terraform state in Azure Storage, you need to create a storage account and a container to hold the state files. You can do this using the Azure CLI or the Azure portal. For this workshop, we will use the Azure CLI.
+
+First, create a resource group to hold the storage account:
+```
+az group create \
+--name rg-tfstate \
+--location eastus
+```
+Set the name of your storage account. The name must be globally unique across Azure, so you may need to change it to something unique for your subscription:
+```
+export STORAGE_ACCOUNT_NAME=terraformstate$(date +%s)
+```
+Next, create a storage account within that resource group:
+```
+az storage account create \
+--name ${STORAGE_ACCOUNT_NAME} \
+--resource-group tf-backend-rg \
+--sku Standard_LRS
+```
+Now, create a container within the storage account to hold the Terraform state files:
+```
+az storage container create \
+--name terraform-state \
+--account-name ${STORAGE_ACCOUNT_NAME}
+```
+Now that you have created the storage account and container, you can configure Terraform to use this remote storage for state management. Update your terraform block and add in your provider.tf file and add the following code under required_providers:
+```
+backend "azurerm" {
+  resource_group_name  = "rg-tfstate"
+  storage_account_name = "SET_YOUR_STORAGE_ACCOUNT_NAME_HERE"
+  container_name       = "tfstate"
+  key                  = "infra.tfstate"
+}
+```
+
+3. **Initialize Terraform:**
 Initialize the Terraform working directory to download required providers:
 ```bash
 terraform init
 ```
-3. **Review the Execution Plan:**
+4. **Review the Execution Plan:**
 Before applying changes, always check the execution plan:
 ```bash
 terraform plan
 ```
-4. **Apply the Configuration:**
+5. **Apply the Configuration:**
 Now, apply the changes and create the infrastructure:
 ```bash
 terraform apply
 ```
 > Confirm with `yes` when prompted.
 
-5. **Update your kubeconfig:**
+6. **Update your kubeconfig:**
 Now, let's connect to the AKS cluster using the Azure CLI. You can do this by running the following command to pass Terraform outputs to the Azure CLI command:
 ```bash
 az aks get-credentials \
 --resource-group $(terraform output -raw rg_name) \
 --name $(terraform output -raw aks_name)
 ```
-6. **Check your cluster:**
+7. **Check your cluster:**
 ```bash
 kubectl get nodes
 ```
